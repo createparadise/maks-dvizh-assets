@@ -32,12 +32,17 @@ def main():
     ap.add_argument("--day", type=int)
     ap.add_argument("--text")
     ap.add_argument("--out")
+    ap.add_argument("--job", help="id уже созданного ролика (vid_...) — докачать без новой генерации и без новой оплаты")
     a = ap.parse_args()
     cfg = load_config()
-    if not (a.day or a.text):
-        die("укажи --day N или --text \"...\"")
-    prompt = a.text or prompt_for_day(a.day)
+    if not (a.day or a.text or a.job):
+        die("укажи --day N, --text \"...\" или --job vid_...")
     out = a.out or path_in("videos", "day%s.mp4" % (a.day or now_msk().strftime("%Y%m%d-%H%M")))
+    out = os.path.abspath(out)
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    if a.job:
+        return fetch(cfg, a.job, out, time.time())
+    prompt = a.text or prompt_for_day(a.day)
     payload = {"model": cfg["video_model"],
                "prompt": prompt + " One single continuous full-frame shot filling the whole frame, no split screen, no collage, no stacked or repeated panels. Photorealistic, no text on screen.",
                "duration": int(cfg["video_seconds"]), "resolution": cfg["video_resolution"],
@@ -50,7 +55,10 @@ def main():
     job = json.loads(raw)
     vid = job["id"]
     print("Задача %s принята, жду готовности (обычно 1–4 мин)…" % vid)
-    t0 = time.time()
+    fetch(cfg, vid, out, time.time())
+
+
+def fetch(cfg, vid, out, t0):
     while True:
         time.sleep(10)
         st, hd, raw = llm(cfg, "GET", "/videos/%s" % vid)
@@ -61,10 +69,10 @@ def main():
         if s in ("failed", "cancelled", "expired"):
             die("ролик не получился: %s" % (job.get("error") or s))
         if time.time() - t0 > 1200:
-            die("ролик делается дольше 20 минут, id %s — проверь позже" % vid)
+            die("ролик делается дольше 20 минут — докачай позже: python gen_video.py --job %s" % vid)
     st, hd2, data = llm(cfg, "GET", "/videos/%s/content" % vid, timeout=600)
     if st != 200 or len(data) < 1000:
-        die("не скачался ролик: %s" % st)
+        die("не скачался ролик (%s) — повтори: python gen_video.py --job %s" % (st, vid))
     with open(out, "wb") as f:
         f.write(data)
     cost = log_spend("видео %sс" % cfg["video_seconds"], cfg["video_model"], hd2 if hd2.get("X-Billing-Cost") else hd,
