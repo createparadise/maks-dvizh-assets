@@ -39,7 +39,7 @@ def main():
     prompt = a.text or prompt_for_day(a.day)
     out = a.out or path_in("videos", "day%s.mp4" % (a.day or now_msk().strftime("%Y%m%d-%H%M")))
     payload = {"model": cfg["video_model"],
-               "prompt": prompt + " Photorealistic, vertical video, no text on screen.",
+               "prompt": prompt + " One single continuous full-frame shot filling the whole frame, no split screen, no collage, no stacked or repeated panels. Photorealistic, no text on screen.",
                "duration": int(cfg["video_seconds"]), "resolution": cfg["video_resolution"],
                "aspect_ratio": cfg["video_aspect_ratio"]}
     if cfg.get("video_provider_only"):  # у других площадок LLM Mart нет маршрута /videos (404/402)
