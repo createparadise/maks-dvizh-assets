@@ -79,10 +79,13 @@ def main():
          cfg["cta_text"])
     payload = {"model": cfg["text_model"], "messages": [{"role": "system", "content": system},
                                                          {"role": "user", "content": user}],
-               "temperature": 0.8, "max_tokens": 9000, "response_format": {"type": "json_object"}}
+               "temperature": 0.8, "max_tokens": 12000, "response_format": {"type": "json_object"},
+               # Kimi K3.x и DeepSeek V4.x по умолчанию «думают» и съедают весь лимит на рассуждения → пустой ответ
+               "reasoning": {"enabled": False}}
     st, hd, raw = llm(cfg, "POST", "/chat/completions", payload, timeout=600)
-    if st == 400:  # модель/площадка не знает json_object — просим JSON словами
-        payload.pop("response_format")
+    if st == 400:  # модель/площадка не знает json_object или reasoning — просим JSON словами
+        payload.pop("response_format", None)
+        payload.pop("reasoning", None)
         st, hd, raw = llm(cfg, "POST", "/chat/completions", payload, timeout=600)
     if st != 200:
         die("LLM Mart (текст) ответил %s: %s" % (st, short_error(raw)))
