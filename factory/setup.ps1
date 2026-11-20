@@ -76,17 +76,28 @@ function Find-Cua {
 }
 $cua = Find-Cua
 if (-not $cua) {
-  $inst = 'irm https://cua.ai/driver/install.ps1 | iex'
-  try { & powershell.exe -NoProfile -ExecutionPolicy Bypass -Command $inst } catch { Warn $_.Exception.Message }
+  # Прямо с GitHub Releases: cua.ai из РФ может не открываться
+  $bin = Join-Path $env:LOCALAPPDATA 'Programs\Cua\cua-driver\bin'
+  New-Item -ItemType Directory -Force -Path $bin | Out-Null
+  $czip = Join-Path $env:TEMP 'cua-driver-win.zip'
+  $url = 'https://github.com/trycua/cua/releases/download/cua-driver-rs-v0.55.0/cua-driver-rs-0.55.0-windows-x86_64-binary.zip'
+  Write-Host '    качаю Cua Driver с GitHub (33 МБ)...'
+  try {
+    Invoke-WebRequest $url -OutFile $czip -UseBasicParsing -TimeoutSec 900
+    Expand-Archive $czip -DestinationPath $bin -Force
+  } catch { Warn $_.Exception.Message }
   $cua = Find-Cua
-  if (-not $cua) {
-    $inst2 = 'irm https://raw.githubusercontent.com/trycua/cua/main/libs/cua-driver/scripts/install.ps1 | iex'
-    try { & powershell.exe -NoProfile -ExecutionPolicy Bypass -Command $inst2 } catch { Warn $_.Exception.Message }
-    $cua = Find-Cua
-  }
 }
 if ($cua) {
-  try { & $cua autostart kick 2>&1 | Out-Null } catch { }
+  $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+  $v = (& $cua --help 2>&1 | Select-Object -First 1 | Out-String).Trim()
+  $code = $LASTEXITCODE
+  $ErrorActionPreference = $old
+  if ($code -eq -1073741795 -or $code -eq -1073741515 -or $code -eq -1073740791) {
+    Warn "Cua Driver не запускается на этом процессоре или без библиотек (код $code)"; $cua = $null
+  } else { Ok "Cua Driver отвечает: $v" }
+}
+if ($cua) {
   Ok "Cua Driver: $cua"
   $mcp = Join-Path $env:APPDATA 'Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json'
   New-Item -ItemType Directory -Force -Path (Split-Path $mcp) | Out-Null
