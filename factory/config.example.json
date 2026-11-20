@@ -1,0 +1,14 @@
+{
+  "llmmart_key": "",
+  "vk_group_token": "",
+  "group_id": 243312492,
+  "promo_code": "DVIZH",
+  "course_url": "https://app.lava.top/products/de794317-9fc1-4ea6-ada5-e03861dd6af7/79e960db-58cd-429d-8b36-fb3402cc0e43?currency=RUB&promoCode=DVIZH",
+  "ref_text": "Программа \"Идеальное тело за 10 минут\" — по коду {promo_code} скидка 10%: {course_url}",
+  "cta_text": "👉 Напиши ТЕЛО в сообщения группы — пришлю программу на 3 дня.",
+  "text_model": "moonshotai/kimi-k3.1-pro",
+  "image_model": "black-forest-labs/flux-3-image-klein",
+  "video_model": "x-ai/grok-imagine-video-1.5-lite",
+  "post_time_msk": "08:00",
+  "posts_per_week": 7
+}
