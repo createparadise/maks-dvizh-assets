@@ -11,7 +11,7 @@ function Say($t) { Write-Host ''; Write-Host ">>> $t" -ForegroundColor Cyan }
 function Ok($t)  { Write-Host "    OK  $t" -ForegroundColor Green }
 function Warn($t){ Write-Host "    !!  $t" -ForegroundColor Yellow }
 
-$root = Join-Path $env:USERPROFILE 'ai\maks-dvizh'
+$root = Join-Path $env:USERPROFILE 'ai\neuroblog\factory'
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 
 # 1. Скрипты фабрики
@@ -105,11 +105,12 @@ if ($cua) {
 }
 
 # 6. Проверка: картинка к посту дня 2 откроется на экране
-Say '6/6 Тест: рисую картинку к посту дня 2'
+Say '6/6 Тест: рисую первую картинку для группы'
 if ($cfg.llmmart_key) {
   Push-Location $root
   $env:PYTHONUTF8 = '1'
-  & $py gen_image.py --day 2
+  New-Item -ItemType Directory -Force -Path (Join-Path $root 'images') | Out-Null
+  & $py gen_image.py --text 'Мужчина 35 лет в футболке делает разминку для спины рядом с рабочим столом дома, утренний свет из окна, живое фото, без текста' --out (Join-Path $root 'images\test-first.png')
   Pop-Location
   $img = Get-ChildItem (Join-Path $root 'images') -Filter *.png -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
   if ($img) { Ok $img.FullName; Start-Process $img.FullName } else { Warn 'картинка не появилась — смотри текст выше' }
